@@ -1,0 +1,38 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Executables and object files
+*.obj
+*.o
+*.rlib
+
+# Cargo package files
+/target/
+**/target/
+
+# Build output (rustc and Cargo)
+//target
+Cargo.lock
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+
+# By default, ignore Mac desktop service store files
+.DS_Store
+
+# By default, ignore Linux trash
+.Trash-*
+
+# By default, ignore Windows thumbnail cache
+Thumbs.db
+
+# Env files
+.env
+
+# Other output and temp files
+*.log

@@ -36,3 +36,6 @@ Thumbs.db
 
 # Other output and temp files
 *.log
+
+# DuckDB database
+*duckdb*

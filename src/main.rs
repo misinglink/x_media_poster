@@ -1,29 +1,23 @@
-mod api;
-mod oauth;
-mod db;
-mod media;
-mod scheduler;
+// Combined runner — ingestion + scheduler + UI all in one process.
+// For independent operation use:
+//   cargo run --bin ingest     (ingestion only)
+//   cargo run --bin scheduler  (scheduler + UI only)
 
-use oauth::OAuthConfig;
-use twapi_v2::oauth10a::OAuthAuthentication;
+use std::sync::{Arc, Mutex};
+use venuscollect::{db, ingestion, scheduler, ui, TWEET_INTERVAL_SECS};
 
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().expect("Failed to load .env file");
-    println!("venuscollect v0.1.0");
+    println!("venuscollect v0.1.0 — combined mode");
 
-    // load creds
-    let config = OAuthConfig::from_env();
-    let oauth = OAuthAuthentication::new(
-        config.consumer_key.clone(),
-        config.consumer_secret.clone(),
-        config.access_token.clone(),
-        config.access_token_secret.clone(),
-    );
+    let conn = db::open().unwrap();
+    let db   = Arc::new(Mutex::new(conn));
 
-    // test post
-    let media_id = media::upload_image(&oauth, "src/assets/misskiahpregnancy_river.jpg").await.unwrap();
-    api::post_tweet(&config, "Photography by: @misskiahphoto", Some(media_id))
-        .await
-        .unwrap();
+    // Interleaved ingestion: Met → AIC → Unsplash per query step
+    tokio::spawn(ingestion::run_ingestion(db.clone()));
+
+    tokio::spawn(scheduler::run_tweet_scheduler(db.clone(), TWEET_INTERVAL_SECS));
+
+    ui::serve(db).await;
 }
